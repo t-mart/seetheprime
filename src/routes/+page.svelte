@@ -90,9 +90,13 @@
 		</ol>
 
 		{#if chunks.length > 0}
-			<p class="flex justify-center text-gray-500 mt-12">
-				Advance with right arrow, down arrow, or space.
+			<p class="mt-12 flex justify-center text-gray-500">
+				Advance with right arrow, down arrow, mouse wheel, or spacebar.
 			</p>
 		{/if}
+
+		<p class="flex justify-center">
+			<a class="underline" href="https://github.com/t-mart/seetheprime">Source code</a>
+		</p>
 	</main>
 </div>
