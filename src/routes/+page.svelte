@@ -57,6 +57,10 @@
 	onkeydown={handleKeyDown}
 />
 
+<svelte:head>
+	<title>See the Prime</title>
+</svelte:head>
+
 <header
 	class="fixed inset-x-0 top-0 z-10 flex flex-wrap items-center justify-center gap-4 bg-white p-4"
 >
@@ -80,36 +84,36 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <main
-	class="fixed inset-0 my-auto flex h-fit flex-col gap-8"
+	class="fixed inset-0 flex justify-center"
 	onclick={() => {
 		nudgeIndex('forward');
 	}}
 >
-	{#if chunks.length > 0}
-		<p class="text-center px-4">
-			{index + 1} of {chunks.length}
-		</p>
-
-		<ol
-			class="flex select-none font-mono text-9xl duration-200"
-			style:transform={`translateX(calc(50% - ${translateOffset}px))`}
-		>
-			{#each chunks as chunk, i (`${i}-${chunk}`)}
-				<li
-					class="block px-[1em] transition-all duration-500"
-					use:registerWidth={i}
-					class:opacity-20={index !== i}
-					class:font-bold={index == i}
-				>
-					{chunk}
-				</li>
-			{/each}
-		</ol>
-
-		<p class="text-center text-gray-500 px-4">
-			Advance with tap/click, mouse wheel, arrow keys, or spacebar. 
-		</p>
-	{/if}
+	<div class="my-auto flex flex-col gap-8">
+		{#if chunks.length > 0}
+			<p class="px-4 text-center">
+				{index + 1} of {chunks.length}
+			</p>
+			<ol
+				class="flex select-none font-mono text-9xl duration-200"
+				style:transform={`translateX(calc(50% - ${translateOffset}px))`}
+			>
+				{#each chunks as chunk, i (`${i}-${chunk}`)}
+					<li
+						class="block px-[1em] transition-all duration-500"
+						use:registerWidth={i}
+						class:opacity-20={index !== i}
+						class:font-bold={index == i}
+					>
+						{chunk}
+					</li>
+				{/each}
+			</ol>
+			<p class="px-4 text-center text-gray-500">
+				Advance with tap/click, mouse wheel, arrow keys, or spacebar.
+			</p>
+		{/if}
+	</div>
 </main>
 
 <footer class="fixed inset-x-0 bottom-0 z-10 flex justify-center bg-white p-4">
