@@ -3,7 +3,7 @@
 
 	let digitsValue = $state(getHashDigitsValue());
 	let digits = $derived(Digits.fromString(digitsValue));
-	let chunkSize = $state(5);
+	let chunkSize = $state(JSON.parse(localStorage.getItem('chunk-size') || '5') as number);
 	let chunks = $derived([...digits.chunks(chunkSize)]);
 	let chunkWidths = $state([] as number[]);
 	let index = $state(0);
@@ -17,6 +17,10 @@
 
 	$effect(() => {
 		window.location.hash = digits.toString();
+	});
+
+	$effect(() => {
+		localStorage.setItem('chunk-size', JSON.stringify(chunkSize));
 	});
 
 	function registerWidth(node: HTMLLIElement, chunkIndex: number) {
@@ -65,7 +69,7 @@
 	class="fixed inset-x-0 top-0 z-10 flex flex-wrap items-center justify-center gap-4 bg-white p-4"
 >
 	<div class="flex items-center gap-2">
-		<label for="digits" class="ml-4">Digits:</label>
+		<label for="digits">Digits:</label>
 		<input
 			type="text"
 			id="digits"
@@ -76,7 +80,7 @@
 	</div>
 
 	<div class="flex items-center gap-2">
-		<label for="chunk-size" class="ml-4">Chunk size:</label>
+		<label for="chunk-size">Chunk size:</label>
 		<input type="range" min="1" max="7" id="chunk-size" bind:value={chunkSize} />
 	</div>
 </header>
@@ -84,23 +88,33 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <main
-	class="fixed inset-0 flex justify-center"
+	class="h-screen w-screen"
 	onclick={() => {
 		nudgeIndex('forward');
 	}}
 >
-	<div class="my-auto flex flex-col gap-8">
+	<div class="fixed inset-0 my-auto flex h-fit flex-col items-center justify-center gap-8">
 		{#if chunks.length > 0}
 			<p class="px-4 text-center">
 				{index + 1} of {chunks.length}
+				{#if index === chunks.length - 1}
+					<button
+						class="ml-4 underline"
+						onclick={(e) => {
+							e.stopPropagation();
+							index = 0;
+						}}>Restart</button
+					>
+				{/if}
 			</p>
+
 			<ol
 				class="flex select-none font-mono text-9xl duration-200"
 				style:transform={`translateX(calc(50% - ${translateOffset}px))`}
 			>
 				{#each chunks as chunk, i (`${i}-${chunk}`)}
 					<li
-						class="block px-[1em] transition-all duration-500"
+						class="block px-[0.5em] transition-all duration-500"
 						use:registerWidth={i}
 						class:opacity-20={index !== i}
 						class:font-bold={index == i}
@@ -109,6 +123,7 @@
 					</li>
 				{/each}
 			</ol>
+
 			<p class="px-4 text-center text-gray-500">
 				Advance with tap/click, mouse wheel, arrow keys, or spacebar.
 			</p>
@@ -116,7 +131,9 @@
 	</div>
 </main>
 
-<footer class="fixed inset-x-0 bottom-0 z-10 flex justify-center bg-white p-4">
+<footer
+	class="fixed inset-x-0 bottom-0 z-10 flex items-center justify-center bg-white p-4 text-center"
+>
 	<span>Tim Martin</span>
 	<span class="mx-4 select-none">&bull;</span>
 	<a class="underline" href="https://github.com/t-mart/seetheprime">Source code</a>
