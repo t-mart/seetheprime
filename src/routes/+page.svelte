@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { Digits } from '$lib/digits';
 
+	const defaultChunkSize = 3;
+
 	let digitsValue = $state(getHashDigitsValue());
 	let digits = $derived(Digits.fromString(digitsValue));
-	let chunkSize = $state(JSON.parse(localStorage.getItem('chunk-size') || '5') as number);
+	let chunkSize = $state(
+		JSON.parse(localStorage.getItem('chunk-size') || defaultChunkSize.toString()) as number
+	);
 	let chunks = $derived([...digits.chunks(chunkSize)]);
 	let chunkWidths = $state([] as number[]);
 	let index = $state(0);
@@ -81,7 +85,17 @@
 
 	<div class="flex items-center gap-2">
 		<label for="chunk-size">Chunk size:</label>
-		<input type="range" min="1" max="7" id="chunk-size" bind:value={chunkSize} />
+		<input
+			type="range"
+			min="1"
+			max="7"
+			id="chunk-size"
+			oninput={(e) => {
+				const approxIndex = index * chunkSize;
+				chunkSize = parseInt(e.currentTarget.value);
+				index = Math.floor(approxIndex / chunkSize);
+			}}
+		/>
 	</div>
 </header>
 
@@ -95,18 +109,7 @@
 >
 	<div class="fixed inset-0 my-auto flex h-fit flex-col items-center justify-center gap-8">
 		{#if chunks.length > 0}
-			<p class="px-4 text-center">
-				{index + 1} of {chunks.length}
-				{#if index === chunks.length - 1}
-					<button
-						class="ml-4 underline"
-						onclick={(e) => {
-							e.stopPropagation();
-							index = 0;
-						}}>Restart</button
-					>
-				{/if}
-			</p>
+			<p class="px-4 text-center">{index + 1} of {chunks.length}</p>
 
 			<ol
 				class="flex select-none font-mono text-9xl duration-200"
@@ -124,9 +127,31 @@
 				{/each}
 			</ol>
 
-			<p class="px-4 text-center text-gray-500">
-				Advance with tap/click, mouse wheel, arrow keys, or spacebar.
-			</p>
+			<div class="flex items-center justify-center gap-2 px-4 text-gray-500">
+				<p class="text-center">Advance with tap/click, mouse wheel, arrow keys, or spacebar.</p>
+
+				{#if index > 0}
+					<button
+						class="underline"
+						onclick={(e) => {
+							e.stopPropagation();
+							nudgeIndex('backward');
+						}}
+					>
+						Back one
+					</button>
+				{/if}
+
+				{#if index === chunks.length - 1 && chunks.length > 1}
+					<button
+						class="underline"
+						onclick={(e) => {
+							e.stopPropagation();
+							index = 0;
+						}}>Restart</button
+					>
+				{/if}
+			</div>
 		{/if}
 	</div>
 </main>
