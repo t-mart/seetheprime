@@ -127,7 +127,7 @@
 				{/each}
 			</ol>
 
-			<div class="flex items-center justify-center gap-2 px-4 text-gray-500">
+			<div class="flex items-center justify-center gap-2 px-4 text-gray-500 flex-wrap">
 				<p class="text-center">Advance with tap/click, mouse wheel, arrow keys, or spacebar.</p>
 
 				{#if index > 0}
