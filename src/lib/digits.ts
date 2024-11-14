@@ -16,8 +16,4 @@ export class Digits {
       yield this.value.slice(i, i + n);
     }
   }
-
-  toString(): string {
-    return this.value;
-  }
 }
