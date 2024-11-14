@@ -2,32 +2,48 @@
 	import { Digits } from '$lib/digits';
 	import { checkDigits } from '$lib/check';
 	import { getLocalStorage, setLocalStorage } from '$lib/localStorage';
+	import { getChunkWidthPx, getEmWidth } from '$lib/width';
 
 	const defaultChunkSize = 3;
 	const chunkSizeKey = 'chunk-size';
+
 	const defaultChunkPaddingEms = 0.5;
 	const chunkPaddingKey = 'chunk-padding';
 
-	let digitsValue = $state(getHashDigitsValue());
-	let digits = $derived(Digits.fromString(digitsValue));
+	const defaultFontSizeRem = 8;
+	const fontSizeKey = 'font-size';
+
+	const fontClass = 'font-mono';
+
+	const initialHashDigitsValue = getHashDigitsValue();
+	const initialDigitsIsFilled = initialHashDigitsValue.length > 0;
+
+	const errorMessage = 'Unknown chunk of prime';
+
+	function validateDigits(value: string) {
+		checkDigits(value).then((isValid) => {
+			digitsError = isValid ? null : errorMessage;
+			digitsInput?.setCustomValidity(isValid ? '' : errorMessage);
+		});
+	}
+
+	let digitsValue = $state(initialHashDigitsValue);
+	let index = $state(0);
 	let chunkSize = $state(getLocalStorage(chunkSizeKey, defaultChunkSize));
 	let chunkPaddingEm = $state(getLocalStorage(chunkPaddingKey, defaultChunkPaddingEms));
+	let fontSizeRem = $state(getLocalStorage(fontSizeKey, defaultFontSizeRem));
+	let digitsHasBeenFocused = $state(false);
+	let digitsError: string | null = $state(null);
+
+	let digits = $derived(Digits.fromString(digitsValue));
+	let chunkPaddingPx = $derived(getEmWidth(chunkPaddingEm, fontClass, fontSizeRem));
 	let chunks = $derived([...digits.chunks(chunkSize)]);
-	// let chunkWidths = $state([] as number[]);
-	let index = $state(0);
-	let translateOffset = $derived.by(() => {
-		chunkPaddingEm;
-		chunkSize;
-		const chunkElements = chunkListElement?.children;
-		if (!chunkElements) return 0;
-		let children = Array.from(chunkElements) as HTMLLIElement[];
-		return (
-			children.slice(0, index).reduce((acc, child) => acc + child.clientWidth, 0) +
-			children[index].clientWidth / 2
-		);
-	});
-	let digitsInput: HTMLInputElement | null;
-	let chunkListElement: HTMLOListElement | null = $state(null);
+	let chunkWidths = $derived(chunks.map((chunk) => getChunkWidthPx(chunk, fontClass, fontSizeRem)));
+	let translateOffset = $derived(
+		chunkWidths.slice(0, index).reduce((acc, width) => acc + width + chunkPaddingPx, 0) +
+			chunkWidths[index] / 2
+	);
+	let digitsInput: HTMLInputElement | null = $state(null);
 
 	function getHashDigitsValue() {
 		return window.location.hash.slice(1).replace(/\D/g, '');
@@ -46,20 +62,15 @@
 	});
 
 	$effect(() => {
-		checkDigits(digitsValue).then((isValid) => {
-			digitsInput?.setCustomValidity(
-				isValid ? '' : 'Entered digits do not hash to a known chunk of prime'
-			);
-		});
+		setLocalStorage(fontSizeKey, fontSizeRem);
 	});
 
 	$effect(() => {
-		// dependency no-ops. (this sucks. is this the best way?)
-		digits;
-		chunkSize;
-		// chunkPaddingEm;
-
-		index = 0;
+		if (initialDigitsIsFilled) {
+			validateDigits(digitsValue);
+		} else if (digitsHasBeenFocused) {
+			validateDigits(digitsValue);
+		}
 	});
 
 	function clampedIndexAdd(delta: number) {
@@ -93,25 +104,44 @@
 	class="fixed inset-x-0 top-0 z-10 flex flex-wrap items-center justify-center gap-4 bg-white p-4"
 >
 	<div class="flex items-center gap-2">
-		<form>
-			<label for="digits">Digits:</label>
-			<input
-				type="text"
-				id="digits"
-				bind:this={digitsInput}
-				bind:value={digitsValue}
-				placeholder="Paste digits here"
-				class="rounded border border-black px-4 py-2 invalid:border-red-500"
-				oninput={() => {
-					digitsValue = digitsValue.replace(/\D/g, '');
-				}}
-			/>
-		</form>
+		<label for="digits">Digits:</label>
+		<input
+			type="text"
+			id="digits"
+			bind:this={digitsInput}
+			bind:value={digitsValue}
+			placeholder="Paste digits here"
+			class="rounded border border-black px-4 py-2 invalid:border-red-500"
+			oninput={() => {
+				// strip non-digits
+				digitsValue = digitsValue.replace(/\D/g, '');
+
+				// reset index
+				index = 0;
+
+				digitsError = null;
+				digitsInput?.setCustomValidity('');
+				validateDigits(digitsValue);
+			}}
+			onfocus={() => {
+				digitsHasBeenFocused = true;
+			}}
+		/>
+		{#if digitsError}
+			<p class="text-red-500">{digitsError}</p>
+		{/if}
 	</div>
 
 	<div class="flex items-center gap-2">
 		<label for="chunk-size">Digits per chunk:</label>
-		<input type="range" min="1" max="7" id="chunk-size" bind:value={chunkSize} />
+		<input
+			type="range"
+			min="1"
+			max="7"
+			id="chunk-size"
+			bind:value={chunkSize}
+			oninput={() => (index = 0)}
+		/>
 	</div>
 
 	<div class="flex items-center gap-2">
@@ -124,6 +154,11 @@
 			id="chunk-padding"
 			bind:value={chunkPaddingEm}
 		/>
+	</div>
+
+	<div class="flex items-center gap-2">
+		<label for="font-size">Font size:</label>
+		<input type="range" min="4" max="16" step="1" id="font-size" bind:value={fontSizeRem} />
 	</div>
 </header>
 
@@ -140,16 +175,16 @@
 			<p class="px-4 text-center">{index + 1} of {chunks.length}</p>
 
 			<ol
-				class="flex select-none font-mono text-9xl duration-100"
+				class={`flex select-none ${fontClass} duration-100`}
 				style:transform={`translateX(calc(50% - ${translateOffset}px))`}
-				bind:this={chunkListElement}
+				style:font-size={`${fontSizeRem}rem`}
 			>
-				{#each chunks as chunk, i (`${i}-${chunk}`)}
+				{#each chunks as chunk, i}
 					<li
-						class="block transition-all"
+						class="block transition-all duration-100"
 						class:opacity-20={index !== i}
 						class:font-bold={index == i}
-						style:padding-inline={`${chunkPaddingEm}em`}
+						style:padding-right={`${chunkPaddingEm}em`}
 					>
 						{chunk}
 					</li>
