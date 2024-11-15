@@ -1,12 +1,12 @@
 <script lang="ts">
 	import '../app.css';
-	import { PUBLIC_PLAUSIBLE_DOMAIN, PUBLIC_PLAUSIBLE_SOURCE_URL } from '$env/static/public';
+	import { PUBLIC_PLAUSIBLE_TAG } from '$env/static/public';
 
 	let { children } = $props();
 </script>
 
 <svelte:head>
-	<script defer data-domain={PUBLIC_PLAUSIBLE_DOMAIN} src={PUBLIC_PLAUSIBLE_SOURCE_URL}></script>
+	{@html PUBLIC_PLAUSIBLE_TAG}
 </svelte:head>
 
 {@render children()}
