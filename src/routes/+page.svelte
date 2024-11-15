@@ -127,7 +127,7 @@
 				// analytics
 				if (!enteredDigitsOnce) {
 					enteredDigitsOnce = true;
-					globalThis['plausible']?.('Enter Digits');
+					plausible('Enter Digits');
 				}
 			}}
 			onfocus={() => {
