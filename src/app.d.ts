@@ -8,6 +8,8 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	function plausible(eventName: string): void;
 }
 
 export {};

@@ -122,6 +122,9 @@
 				digitsError = null;
 				digitsInput?.setCustomValidity('');
 				validateDigits(digitsValue);
+
+				// analytics
+				plausible('Enter Digits');
 			}}
 			onfocus={() => {
 				digitsHasBeenFocused = true;
