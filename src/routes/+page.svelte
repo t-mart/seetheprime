@@ -34,6 +34,7 @@
 	let fontSizeRem = $state(getLocalStorage(fontSizeKey, defaultFontSizeRem));
 	let digitsHasBeenFocused = $state(false);
 	let digitsError: string | null = $state(null);
+	let enteredDigitsOnce = $state(false);
 
 	let digits = $derived(Digits.fromString(digitsValue));
 	let chunkPaddingPx = $derived(getEmWidth(chunkPaddingEm, fontClass, fontSizeRem));
@@ -124,7 +125,10 @@
 				validateDigits(digitsValue);
 
 				// analytics
-				plausible('Enter Digits');
+				if (!enteredDigitsOnce) {
+					enteredDigitsOnce = true;
+					plausible('Enter Digits');
+				}
 			}}
 			onfocus={() => {
 				digitsHasBeenFocused = true;
